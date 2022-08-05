@@ -1,0 +1,221 @@
+
+---
+title: 'CAPM Financial Analysis'
+author: "Naim Sejtanic"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, message=FALSE, warning=FALSE}
+library(magrittr)
+library(dplyr)
+library(doBy)
+library(zoo)
+library(rvest)
+library(rmarkdown)
+library(tinytex)
+knitr::opts_chunk$set(include = TRUE, eval = TRUE)
+```
+
+
+## CAPM Analysis
+We will analyze 5 Fortune 500 companies and Gold, and compare their returns to the returns of the risk-free interest rate. The data used is from 1990-2001 is in the capm.csv file.
+
+First, we compute the excess returns on Exxon, General Electric, Gold, IBM, Microsoft, and Walmart.
+
+Log Returns of investment on Exxon, General Electric, Gold, IBM, Microsoft and Walmart.
+
+```{r}
+capm <- read.csv("capm.csv")
+return_exxon = diff(log(capm$exxon))
+return_ge = diff(log(capm$ge))
+return_gold = diff(log(capm$gold))
+return_ibm = diff(log(capm$ibm))
+return_msoft = diff(log(capm$msoft))
+return_wmart = diff(log(capm$wmart))
+return_market = diff(log(capm$sp500))
+```
+
+Excess returns on Exxon, General Electric, Gold, IBM, Microsoft and Walmart.
+Excess returns: The difference between the return on a risky financial asset and a risk-free interest rate
+
+```{r}
+ca <- data.frame(  
+  excess_return_exxon = return_exxon-capm$riskfree[-1],
+  excess_return_ge = return_ge-capm$riskfree[-1],
+  excess_return_gold = return_gold-capm$riskfree[-1],
+  excess_return_ibm = return_ibm-capm$riskfree[-1],
+  excess_return_msoft = return_msoft-capm$riskfree[-1],
+  excess_return_wmart = return_wmart-capm$riskfree[-1],
+  excess_return_market = return_market-capm$riskfree[-1] 
+)
+head(ca)
+```
+
+Letting $$r_{it}-r_{ft}$$ represent the excess return on asset $i$ and $r_{mt}-r_{ft}$ represent the excess return on the market, we will estimate the CAPM $$r_{it}-r_{ft}=\alpha+\beta(r_{mt}-r_{ft})+\mu_t$$
+for each asset where $\mu_t$ is a disturbance term. We will also interpret the estimated $\beta-$ and $\alpha-$ risks.
+
+Estimating the CAPM model
+
+```{r}
+exxon = lm(excess_return_exxon~excess_return_market, data=ca)
+summary(exxon)
+```
+The estimated model for Exxon: $$r_{it}-r_{ft}=0.0120+0.5018(r_{mt}-r_{ft})+\mu_t$$ 
+$\hat\alpha-$ captures the abnormal return to the asset over and above the asset's exposure to the excess return on the market, which is 0.0120 and positive sign means earning higher in excess of the return predicted by CAPM .
+$\hat\beta-$ risk is 0.5018 which is $0<\hat\beta<1$ and means conservative, and returns on conservative stocks are lower than the market on average during periods of market growth, whereas during periods of market decline, the falls in returns of conservative stocks tend to be smaller than the falls experienced by the market. 
+
+
+
+```{r}
+ge = lm(excess_return_ge~excess_return_market, data = ca)
+summary(ge)
+```
+The estimated model for ge: $$r_{it}-r_{ft}=0.0157+1.1436(r_{mt}-r_{ft})+\mu_t$$ 
+$\hat\alpha$ is 0.0157 and positive means earning higher in excess of the return predicted by CAPM .
+$\hat\beta$ risk is 1.1436 which is $\hat\beta>1$ and means aggressive and it moves on average in excess to movements in the market.These stocks are expected to earn higher returns than the market in bull markets but in bear markets these returns are expected to be lower than the market. 
+
+
+
+
+```{r}
+gold = lm(excess_return_gold~excess_return_market, data = ca)
+summary(gold)
+```
+The estimated model for gold: $$r_{it}-r_{ft}=-0.0027 -0.0985(r_{mt}-r_{ft})+\mu_t$$ 
+$\hat\alpha$ is -0.0027 and negative sign means earning less in excess of the return predicted by CAPM .
+$\hat\beta$ risk is -0.0985 which is $-1<\hat\beta<0$ and so is hedge stock which moved in the opposite direction to the market thereby counterbalancing market movements. Since the absolute movements in the stock are less than the market movements, so it is an imperfectly hedged stock.  
+
+
+
+```{r}
+ibm = lm(excess_return_ibm~excess_return_market, data = ca)
+summary(ibm)
+```
+The estimated model for ibm: $$r_{it}-r_{ft}=0.0043+1.2050(r_{mt}-r_{ft})+\mu_t$$ 
+$\hat\alpha$ is 0.0043 and positive means earning higher in excess of the return predicted by CAPM .
+$\hat\beta$ risk is 1.2050 which is $\hat\beta>1$ and means aggressive stock and it moves on average in excess to movements in the marke and is expected to earn higher returns than the market in bull markets but in bear markets these returns are expected to be lower than the market.  
+
+
+
+```{r}
+microsoft= lm(excess_return_msoft~excess_return_market, data = ca)
+summary(microsoft)
+```
+The estimated model for microsoft: $$r_{it}-r_{ft}=0.0122+1.4474(r_{mt}-r_{ft})+\mu_t$$ 
+$\hat\alpha$ is 0.0122 and positive means earning higher in excess of the return predicted by CAPM .
+$\hat\beta$ risk is 1.4474 which is $\hat\beta>1$ and means aggressive stock and it moves on average in excess to movements in the market and is expected to earn higher returns than the market in bull markets but in bear markets these returns are expected to be lower than the market.. 
+
+
+
+```{r}
+walmart= lm(excess_return_wmart~excess_return_market, data = ca)
+summary(walmart)
+```
+The estimated model for walmart: $$r_{it}-r_{ft}=0.0070+0.8685(r_{mt}-r_{ft})+\mu_t$$ 
+$\hat\alpha$ is 0.0070 and positive means earning higher in excess of the return predicted by CAPM .
+$\hat\beta$ risk is 0.8685 which is $0<\hat\beta<1$ and means conservative stock and the returns are lower than the market on average during periods of market growth, whereas during periods of market decline, the falls in returns of conservative stocks tend to be smaller than the falls experienced by the market. 
+. 
+
+
+For each asset, we will now test the restrictions $\alpha=0$ and $\beta=1$ individually and jointly.
+
+>i)$\alpha=0$ 
+
+```{r}
+print(summary(exxon)$coefficients[1,'t value'])
+print(summary(ge)$coefficients[1,'t value'])
+print(summary(gold)$coefficients[1,'t value'])
+print(summary(ibm)$coefficients[1,'t value'])
+print(summary(microsoft)$coefficients[1,'t value'])
+print(summary(walmart)$coefficients[1,'t value'])
+```
+We can reject the hypothesis $\alpha=0$ of exxon, ge and microsoft with 5% significance level. We failed to reject the hypothesis for walmart, ibm and gold with 5% significance level. 
+
+>ii)$\beta=1$
+
+```{r}
+print(summary(exxon)$coefficients[2,'Estimate'])
+print(summary(exxon)$coefficients[2,'Std. Error'])
+exxon_tstatistic = (summary(exxon)$coefficients[2,'Estimate'] - 1)/summary(exxon)$coefficients[2,'Std. Error']
+print(exxon_tstatistic)
+```
+The t-statistic of exxon is -7.2386 and showed the excess return of exxon on market return is 95% significantly confident. 
+
+
+```{r}
+print(summary(ge)$coefficients[2,'Estimate'])
+print(summary(ge)$coefficients[2,'Std. Error'])
+ge_tstatistic = (summary(ge)$coefficients[2,'Estimate'] - 1)/summary(ge)$coefficients[2,'Std. Error']
+print(ge_tstatistic)
+```
+The t-statistic of ge is 1.4584, so we failed to show the excess return on market return is 95% significant confident. 
+
+
+```{r}
+print(summary(gold)$coefficients[2,'Estimate'])
+print(summary(gold)$coefficients[2,'Std. Error'])
+gold_tstatistic = (summary(gold)$coefficients[2,'Estimate'] - 1)/summary(gold)$coefficients[2,'Std. Error']
+print(gold_tstatistic)
+```
+The t-statistic of gold equals to -20.6460 and showed the excess return of gold on market return is significant at the 5% level. 
+
+
+```{r}
+print(summary(ibm)$coefficients[2,'Estimate'])
+print(summary(ibm)$coefficients[2,'Std. Error'])
+ibm_tstatistic = (summary(ibm)$coefficients[2,'Estimate'] - 1)/summary(ibm)$coefficients[2,'Std. Error']
+print(ibm_tstatistic)
+```
+The t-statistic of ibm equals to 1.4512 and failed to show the excess of return on market return is 95% significantly confident.
+
+
+```{r}
+print(summary(microsoft)$coefficients[2,'Estimate'])
+print(summary(microsoft)$coefficients[2,'Std. Error'])
+msoft_tstatistic = (summary(microsoft)$coefficients[2,'Estimate'] - 1)/summary(microsoft)$coefficients[2,'Std. Error']
+print(msoft_tstatistic)
+```
+The t-statistic of microsoft is 2.8637 and showed that the excess return of microsoft on market return is significant at the 5% significance level. 
+
+
+
+```{r}
+print(summary(walmart)$coefficients[2,'Estimate'])
+print(summary(walmart)$coefficients[2,'Std. Error'])
+wmart_tstatistic = (summary(walmart)$coefficients[2,'Estimate'] - 1)/summary(walmart)$coefficients[2,'Std. Error']
+print(wmart_tstatistic)
+```
+The t-statistic of walmart is equal to -1.1035 and failed to reject the hypothesis in the 5% significance level. 
+
+>iii)Joint-Prameter Tests $\alpha=0$ and $\beta=1$ using
+$J=\frac{{RSS_0}-{RSS_1}}{RSS_1/(T-K-1)}$
+
+```{r}
+
+pval_capm <- function( y, x){
+    n <- length(y)
+    reg = lm(y ~ x) # the unrestricted model
+    e1 <- residuals(reg)
+    RSS1 <- sum( e1^2 )
+    
+    e0 <- y - x
+    RSS0 <- sum(e0^2)
+    
+    
+    J <- (RSS0 - RSS1)/( RSS1 / ( n - 2 - 1 ))
+    pval <- 1 - pchisq(J, 2)
+    return(pval)
+}
+
+pval_capm(ca$excess_return_ibm, ca$excess_return_market)
+
+pval_for_each <- rep(NA,6)
+for( j in 1:6){
+    pval_for_each[j] <- pval_capm(ca[, j], ca$excess_return_market)
+    }
+print(pval_for_each)
+
+```
+For exxon, ge, gold and microsoft, the p-values after J-statistics in this joint test approximate to zero, which means they are significantly confident and provides strong support for the regression results. However, for ibm and walmart, the p-values are bigger than 0.05, so it failed to show that it is 95% significantly confident.
